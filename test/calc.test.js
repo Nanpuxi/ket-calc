@@ -1,4 +1,4 @@
-import { EXAMS, interpolate, scaleOf, speakingScore, calculate } from '../src/utils/calc.js'
+import { EXAMS, EXAM_ORDER, interpolate, scaleOf, speakingScore, writingScore, calculate, studyTips, advise } from '../src/utils/calc.js'
 
 let pass = 0
 let fail = 0
@@ -85,3 +85,21 @@ if (fail) {
   process.exit(1)
 }
 console.log('  全部通过\n')
+
+/* 六考试配置完整性 */
+assert('考试共六级', EXAM_ORDER.length === 6)
+EXAM_ORDER.forEach(k => {
+  const e = EXAMS[k]
+  assert(k + ' 配置完整', e && e.tiers && e.anchors && e.reference && e.certName && e.scaleMax > e.scaleMin)
+  const r = calculate(k, Object.fromEntries(e.skills.map(s => [s.key, s.max])))
+  assert(k + ' 满分达到上限', r.overall === e.scaleMax || r.gradeKey === 'max')
+  const low = calculate(k, Object.fromEntries(e.skills.map(s => [s.key, 0])))
+  assert(k + ' 零分不崩溃', low.overall >= 0 && low.warnings.length > 0)
+})
+assert('KET 阅读低于门槛不计分', calculate('ket', { reading: 5, writing: 20, listening: 19, speaking: 33 }).skills[0].invalid === true)
+assert('写作分项折算', writingScore('ket', { content: 5, organisation: 5, language: 5 }) === 15)
+assert('FCE 写作满分', writingScore('fce', { content: 5, organisation: 5, language: 5 }) === 40)
+assert('KET 写作细分满分可传 max', writingScore('ket', { content: 5, organisation: 5, language: 5 }, 30) === 30)
+assert('提分建议有结果', advise('ket', calculate('ket', { reading: 20, writing: 18, listening: 17, speaking: 27 }), 133).length > 0)
+assert('已达标无建议', advise('ket', calculate('ket', { reading: 28, writing: 26, listening: 23, speaking: 41 }), 133).length === 0)
+assert('备考建议为字符串数组', studyTips('ket', calculate('ket', { reading: 10, writing: 18, listening: 17, speaking: 27 })).every(t => typeof t === 'string'))
