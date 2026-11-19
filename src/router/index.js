@@ -2,12 +2,8 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import MseCalculator from '../views/MseCalculator.vue'
 
 const routes = [
+  { path: '/', redirect: '/ket' },
   {
-    path: '/',
-    redirect: '/ket'
-  },
-  {
-    /* 三套考试共用一个组件，用 props 区分默认考试类型 */
     path: '/ket',
     name: 'KetCalc',
     component: MseCalculator,
